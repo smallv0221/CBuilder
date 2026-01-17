@@ -16,3 +16,4 @@ See source code for configuration options.
 
 Start the server and send HTML content to the `/extract` endpoint:
 
+Plugins located in https://github.com/smallv0221/LanguageExtractor
