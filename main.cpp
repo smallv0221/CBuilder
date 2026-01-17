@@ -1,4 +1,3 @@
-// WebLanguageServer - A simple HTTP server that uses a plugin to extract language from HTML
 // Configuration can be provided via config.json or environment variables
 // See source code for configuration options
 
@@ -198,12 +197,45 @@ int main() {
         }
         
         // Read request
-        char buffer[65536];
-        memset(buffer, 0, sizeof(buffer));
-        ssize_t bytesRead = read(clientFd, buffer, sizeof(buffer) - 1);
+        std::string request;
+        char buffer[8192];
+        ssize_t bytesRead;
         
-        if (bytesRead > 0) {
-            std::string request(buffer, bytesRead);
+        // Read headers first
+        while ((bytesRead = read(clientFd, buffer, sizeof(buffer) - 1)) > 0) {
+            buffer[bytesRead] = '\0';
+            request.append(buffer, bytesRead);
+            
+            // Check if we have the complete headers
+            size_t headerEnd = request.find("\r\n\r\n");
+            if (headerEnd != std::string::npos) {
+                // Parse Content-Length
+                size_t clPos = request.find("Content-Length:");
+                if (clPos == std::string::npos) {
+                    clPos = request.find("content-length:");
+                }
+                
+                if (clPos != std::string::npos) {
+                    size_t clEnd = request.find("\r\n", clPos);
+                    std::string clValue = request.substr(clPos + 15, clEnd - clPos - 15);
+                    size_t contentLength = std::stoul(clValue);
+                    size_t bodyStart = headerEnd + 4;
+                    size_t currentBodySize = request.size() - bodyStart;
+                    
+                    // Read remaining body if needed
+                    while (currentBodySize < contentLength) {
+                        bytesRead = read(clientFd, buffer, sizeof(buffer) - 1);
+                        if (bytesRead <= 0) break;
+                        buffer[bytesRead] = '\0';
+                        request.append(buffer, bytesRead);
+                        currentBodySize += bytesRead;
+                    }
+                }
+                break;
+            }
+        }
+        
+        if (!request.empty()) {
             std::string method, path;
             std::string body = parseHttpRequest(request, method, path);
             
