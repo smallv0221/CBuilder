@@ -1,6 +1,6 @@
-# WebLanguageServer
+# CBuilder
 
-A simple HTTP server that extracts language information from HTML documents using a plugin architecture.
+A simple HTTP server that servers as a platform for preocessing HTML documents using a plugin architecture.
 
 ## Building
 
@@ -16,6 +16,3 @@ See source code for configuration options.
 
 Start the server and send HTML content to the `/extract` endpoint:
 
-```bash
-curl -X POST --data-binary @page.html http://localhost:5000/extract
-```
